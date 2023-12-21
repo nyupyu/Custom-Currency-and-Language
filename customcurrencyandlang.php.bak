@@ -1,0 +1,61 @@
+<?php
+if (!defined('_PS_VERSION_')) {
+    exit;
+}
+
+class customcurrencyandlang extends Module
+{
+    public function __construct()
+    {
+        $this->name = 'customcurrencyandlang';
+        $this->tab = 'front_office_features';
+        $this->version = '0.0.2';
+        $this->author = 'nyupyu';
+
+        parent::__construct();
+
+        $this->displayName = $this->l('Custom Currency and Language');
+        $this->description = $this->l('Module to set default currency and language on the front end.');
+    }
+
+    public function install()
+    {
+        return parent::install() &&
+            $this->registerHook('displayHeader');
+    }
+
+    public function hookDisplayHeader($params)
+    {
+        $availableLanguages = array('pl', 'en'); // Dodaj wszystkie dostępne języki
+        $defaultLanguage = 'en'; // Domyślny język
+
+        $browserLanguage = $this->getBrowserLanguage($availableLanguages, $defaultLanguage);
+
+        // Ustaw domyślny język
+        Context::getContext()->language = new Language(Language::getIdByIso($browserLanguage));
+
+        $availableCurrencies = array('PLN', 'EUR'); // Dodaj wszystkie dostępne waluty
+        $defaultCurrency = 'EUR'; // Domyślna waluta
+
+        Context::getContext()->currency = new Currency(Currency::getIdByIsoCode($defaultCurrency));
+
+    }
+
+    public function getBrowserLanguage($available, $default)
+    {
+        if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+            $langs = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
+            if (empty($available)) {
+                return empty($langs) ? $default : $langs[0];
+            }
+
+            foreach ($langs as $lang) {
+                $lang = substr($lang, 0, 2);
+                if (in_array($lang, $available)) {
+                    return $lang;
+                }
+            }
+        }
+        return $default;
+    }
+}
